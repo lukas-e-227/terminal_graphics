@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "./draw.h"
 #include "./geometry.h"
@@ -117,15 +118,27 @@ void add_to_mesh(Mesh *m, Triangle triangle, size_t length)
     return;
 }
 
+void free_mesh(Mesh *m)
+{
+    Mesh *current;
+    while (m != NULL)
+    {
+        current = m;
+        m = m->next;
+        free(current);
+    }
+    return;
+}
 
 void draw_triangle_from_mesh(Triangle t, float delta_time)
 {
-    Matrix4 m_z = z_rotate(delta_time * 0.5);
-    Matrix4 m_x = x_rotate(delta_time * 0.25);
+    Matrix4 m_z = z_rotate(delta_time * 32);
+    Matrix4 m_x = x_rotate(delta_time * 16);
     Matrix4 m_z_x = multiply_matrix_matrix(&m_z, &m_x);
     // translate and project maybe dont need to be instantiated every frame?
     Matrix4 translate = translation_matrix(0.f, 0.f, 3.f);
-
+    
+    //Matrix4 m_t_s = multiply_matrix_matrix(&translate, &scale);
     Matrix4 w_m = multiply_matrix_matrix(&translate,  &m_z_x);
 
     multiply_triangle_matrix(&w_m, &t);
@@ -133,15 +146,13 @@ void draw_triangle_from_mesh(Triangle t, float delta_time)
     Matrix4 project = projection_matrix(90.f, (float) HEIGHT / (float) WIDTH, 0.1f, 1000.f);
     multiply_triangle_matrix(&project, &t);
 
-    t.points[0].x += 5.0f; t.points[0].y += 5.0f;
-	t.points[1].x += 5.0f; t.points[1].y += 5.0f;
-	t.points[2].x += 5.0f; t.points[2].y += 5.0f;
-	t.points[0].x *= 0.5f * (float)WIDTH;
-	t.points[0].y *= 0.5f * (float)HEIGHT;
-	t.points[1].x *= 0.5f * (float)WIDTH;
-	t.points[1].y *= 0.5f * (float)HEIGHT;
-	t.points[2].x *= 0.5f * (float)WIDTH;
-	t.points[2].y *= 0.5f * (float)HEIGHT;
+    Matrix4 scale = scale_matrix(16.f);
+    multiply_triangle_matrix(&scale, &t);
+    
+    t.points[0].x += 30.0f; t.points[0].y += 30.0f;
+	t.points[1].x += 30.0f; t.points[1].y += 30.0f;
+	t.points[2].x += 30.0f; t.points[2].y += 30.0f;
+    
 
     //Vec2 a = {t.points[0].x, t.points[0].y};
     //Vec2 b = {t.points[1].x, t.points[1].y};
@@ -185,10 +196,14 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
+
     initscr();
+    cbreak();
+    timeout(1);
+    int c = 0;
     // make pointer to start of mesh to reset after iterating over it
     Mesh *mesh_first_element = m;
-    while (1)
+    while (c != ' ')
     {
         clear();
         while (m->next != NULL)
@@ -200,10 +215,12 @@ int main(int argc, char *argv[])
         }
         refresh();
         m = mesh_first_element;
-        usleep(500);
+        c = getch();
+        usleep(50000);
     }
-    getch();
 
+    free_mesh(m);
     endwin();
+    exit(0);
     return 0;
 }

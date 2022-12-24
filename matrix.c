@@ -57,9 +57,19 @@ Matrix4 translation_matrix(float x, float y, float z)
     m.m[1][1] = 1.;
     m.m[2][2] = 1.;
     m.m[3][3] = 1.;
-    m.m[3][0] = x;
-    m.m[3][1] = y;
-    m.m[3][2] = z;
+    m.m[0][3] = x;
+    m.m[1][3] = y;
+    m.m[2][3] = z;
+    return m;
+}
+
+Matrix4 scale_matrix(float scale_factor)
+{
+    Matrix4 m = default_zero();
+    m.m[0][0] = scale_factor;
+    m.m[1][1] = scale_factor;
+    m.m[2][2] = scale_factor;
+    m.m[3][3] = 1.f;
     return m;
 }
 

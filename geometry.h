@@ -42,6 +42,8 @@ Matrix4 translation_matrix(float x, float y, float z);
 
 Matrix4 projection_matrix(float fov_deg, float aspect_ratio, float near, float far);
 
+Matrix4 scale_matrix(float scale_factor);
+
 Matrix4 multiply_matrix_matrix(Matrix4 *m0, Matrix4 *m1);
 
 Vec4 multiply_matrix_vector(Matrix4 *m, Vec4 v);
