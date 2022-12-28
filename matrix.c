@@ -118,8 +118,66 @@ void multiply_triangle_matrix(Matrix4 *m, Triangle *t)
     return;
 }
 
-Vec4 convert_to_vec4(Vec3 v)
+Vec4 to_vec4(Vec3 v)
 {
     Vec4 v_4 = {v.x, v.y, v.z, 1.f};
     return v_4;
+}
+
+Vec3 to_vec3(Vec4 v)
+{
+    Vec3 v_3 = {v.x, v.y, v.z};
+    return v_3;
+}
+
+Vec3 cross_product(Vec3 *v0, Vec3 *v1)
+{
+    Vec3 c = {
+        v0->y * v1->z - v0->z * v1->y,
+        v0->z * v1->x - v0->x * v1->z,
+        v0->x * v1->y - v0->y * v1->x,
+    };
+    return c;
+}
+
+float dot_product(Vec3 *v0, Vec3 *v1)
+{
+    float p = v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;
+    return p;
+}
+
+Vec3 normalize(Vec3 *v)
+{
+    float length = sqrtf(dot_product(v, v));
+    Vec3 n = {
+        v->x / length,
+        v->y / length,
+        v->z / length
+    };
+    return n;
+}
+
+/**
+ * v0 - v1
+*/
+Vec3 sub(Vec3 *v0, Vec3 *v1)
+{
+     Vec3 s = {
+        v0->x - v1->x,
+        v0->y - v1->y,
+        v0->z - v1->z
+    };
+    return s;
+}
+
+Vec3 get_normal(Triangle *t)
+{
+    Vec3 a = to_vec3(t->points[0]);
+    Vec3 b = to_vec3(t->points[1]);
+    Vec3 c = to_vec3(t->points[2]);
+    Vec3 ab = sub(&b, &a);
+    Vec3 ac = sub(&c, &a);
+    Vec3 cross = cross_product(&ab, &ac);
+    Vec3 n = normalize(&cross);
+    return n;
 }

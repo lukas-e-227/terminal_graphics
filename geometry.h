@@ -50,7 +50,15 @@ Vec4 multiply_matrix_vector(Matrix4 *m, Vec4 v);
 
 void multiply_triangle_matrix(Matrix4 *m, Triangle *t);
 
-Vec4 convert_to_vec4(Vec3 v);
+Vec4 to_vec4(Vec3 v);
+
+Vec3 to_vec3(Vec4 v);
+
+float dot_product(Vec3 *v0, Vec3 *v1);
+
+Vec3 sub(Vec3 *v0, Vec3 *v1);
+
+Vec3 get_normal(Triangle *t);
 
 void add_to_mesh(Mesh *m, Triangle t, size_t length);
 

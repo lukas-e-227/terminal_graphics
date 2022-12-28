@@ -9,9 +9,6 @@
 
 #define LINE_LENGTH 50
 
-#define HEIGHT 30
-#define WIDTH 40
-
 /**
  * parses an obj file to return a mesh of triangles
 */
@@ -130,38 +127,46 @@ void free_mesh(Mesh *m)
     return;
 }
 
-void draw_triangle_from_mesh(Triangle t, float delta_time)
+void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int height, Vec3 *cam_pos)
 {
     Matrix4 m_z = z_rotate(delta_time * 32);
     Matrix4 m_x = x_rotate(delta_time * 16);
     Matrix4 m_z_x = multiply_matrix_matrix(&m_z, &m_x);
     // translate and project maybe dont need to be instantiated every frame?
-    Matrix4 translate = translation_matrix(0.f, 0.f, 3.f);
+    Matrix4 translate = translation_matrix(0.f, 0.f, 4.f);
     
     //Matrix4 m_t_s = multiply_matrix_matrix(&translate, &scale);
     Matrix4 w_m = multiply_matrix_matrix(&translate,  &m_z_x);
 
-    multiply_triangle_matrix(&w_m, &t);
+    multiply_triangle_matrix(&w_m, t);
     
-    Matrix4 project = projection_matrix(90.f, (float) HEIGHT / (float) WIDTH, 0.1f, 1000.f);
-    multiply_triangle_matrix(&project, &t);
+    Vec3 normal = get_normal(t);
+    Vec3 t_point = to_vec3(t->points[0]);
+    Vec3 cam_to_triangle = sub(&t_point, cam_pos);
+//dot_product(&normal, &cam_to_triangle)
+    if ( normal.z < 0.f)
+    {
 
-    Matrix4 scale = scale_matrix(16.f);
-    multiply_triangle_matrix(&scale, &t);
-    
-    t.points[0].x += 30.0f; t.points[0].y += 30.0f;
-	t.points[1].x += 30.0f; t.points[1].y += 30.0f;
-	t.points[2].x += 30.0f; t.points[2].y += 30.0f;
-    
+        Matrix4 project = projection_matrix(90.f, 4.f / 3.f, 0.1f, 1000.f);
+        multiply_triangle_matrix(&project, t);
 
-    //Vec2 a = {t.points[0].x, t.points[0].y};
-    //Vec2 b = {t.points[1].x, t.points[1].y};
-    //Vec2 c = {t.points[2].x, t.points[2].y};
-    
-    draw_line(t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, '*');
-    draw_line(t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y, '*');
-    draw_line(t.points[2].x, t.points[2].y, t.points[0].x, t.points[0].y, '*');
+        Matrix4 scale = scale_matrix(16.f);
+        multiply_triangle_matrix(&scale, t);
+        
+        // center the model 
+        t->points[0].x += (float) width / 2.f; t->points[0].y += (float) height / 2.f;
+        t->points[1].x += (float) width / 2.f; t->points[1].y += (float) height / 2.f;
+        t->points[2].x += (float) width / 2.f; t->points[2].y += (float) height / 2.f;
+        
 
+        //Vec2 a = {t.points[0].x, t.points[0].y};
+        //Vec2 b = {t.points[1].x, t.points[1].y};
+        //Vec2 c = {t.points[2].x, t.points[2].y};
+        
+        draw_line(t->points[0].x, t->points[0].y, t->points[1].x, t->points[1].y, '*');
+        draw_line(t->points[1].x, t->points[1].y, t->points[2].x, t->points[2].y, '*');
+        draw_line(t->points[2].x, t->points[2].y, t->points[0].x, t->points[0].y, '*');
+    }
     return;
 }
 
@@ -200,17 +205,22 @@ int main(int argc, char *argv[])
     initscr();
     cbreak();
     timeout(1);
+    Vec3 cam_pos = {0.f, 0.f, 0.f};
+    int width = 0, height = 0;
     int c = 0;
     // make pointer to start of mesh to reset after iterating over it
     Mesh *mesh_first_element = m;
     while (c != ' ')
     {
         clear();
+        getmaxyx(stdscr, height, width);
+        
         while (m->next != NULL)
         {
             end = clock();
             delta_time = ((double) (end - start)) /CLOCKS_PER_SEC;
-            draw_triangle_from_mesh(m->t, delta_time);
+            Triangle t = m->t;
+            draw_triangle_from_mesh(&t, delta_time, width, height, &cam_pos);
             m = m->next;
         }
         refresh();
