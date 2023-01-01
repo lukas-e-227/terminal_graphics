@@ -1,38 +1,31 @@
-struct matrix4 {
+#define M_PI 3.14159265358979323846
+
+typedef struct matrix4 {
     float m[4][4];
-};
+} Matrix4;
 
-typedef struct matrix4 Matrix4;
-
-struct vec3 {
+typedef struct vec3 {
     float x;
     float y;
     float z;
-};
+} Vec3;
 
-typedef struct vec3 Vec3;
-
-struct vec4 {
+typedef struct vec4 {
     float x;
     float y;
     float z;
     float w;
-};
+} Vec4;
 
-typedef struct vec4 Vec4;
-
-struct triangle {
+typedef struct triangle {
     Vec4 points[3];
-};
+} Triangle;
 
-typedef struct triangle Triangle;
-
-struct mesh {
+typedef struct mesh {
     Triangle t;
     struct mesh *next;
-};
+} Mesh;
 
-typedef struct mesh Mesh;
 
 Matrix4 x_rotate(float a);
 Matrix4 y_rotate(float a);
@@ -57,6 +50,8 @@ Vec3 to_vec3(Vec4 v);
 float dot_product(Vec3 *v0, Vec3 *v1);
 
 Vec3 sub(Vec3 *v0, Vec3 *v1);
+
+Vec3 normalize(Vec3 *v);
 
 Vec3 get_normal(Triangle *t);
 

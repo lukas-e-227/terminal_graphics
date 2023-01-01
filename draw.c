@@ -1,8 +1,27 @@
 #include <ncurses.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "./draw.h"
+                               
+static const char CHARS[] = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
+static const char CHARS_2[] = {' ','.',':','-','=','+','*','#','%','@'};
 
+char map_float_char(float light_value)
+{
+    int len = sizeof(CHARS) / sizeof(CHARS[0]);
+    int index = (int)(len - fabs(light_value) * len);
+    char c = CHARS[index];
+    return c;
+}
+
+char map_float_char_2(float light_value)
+{
+    int len = sizeof(CHARS_2) / sizeof(CHARS_2[0]);
+    int index = (int) (fabs(light_value) * len);
+    char c = CHARS_2[index];
+    return c;
+}
 
 void draw_flat_triangle_bottom(Vec2 a, Vec2 b, Vec2 c, char ch)
 {   
@@ -14,11 +33,12 @@ void draw_flat_triangle_bottom(Vec2 a, Vec2 b, Vec2 c, char ch)
 
     for (int line_y = a.y; line_y <= b.y; ++line_y)
     {
-        //draw_line((int) current_x_1, line_y, (int) current_x_2, line_y);
-        draw_horizontal_line(current_x_1, current_x_2, line_y, ch);
+        //draw_line((int) current_x_1, line_y, (int) current_x_2, line_y, ch);
+        draw_horizontal_line((int) current_x_1, (int) current_x_2, line_y, ch);
         current_x_1 += slope_1;
         current_x_2 += slope_2;
     }
+    return;
 }
 
 void draw_flat_triangle_top(Vec2 a, Vec2 b, Vec2 c, char ch)
@@ -31,11 +51,12 @@ void draw_flat_triangle_top(Vec2 a, Vec2 b, Vec2 c, char ch)
 
     for (int line_y = c.y; line_y > a.y; --line_y)
     {
-        //draw_line((int) current_x_1, line_y, (int) current_x_2, line_y);
-        draw_horizontal_line(current_x_1, current_x_2, line_y, ch);
+        //draw_line((int) current_x_1, line_y, (int) current_x_2, line_y, ch);
+        draw_horizontal_line((int) current_x_1, (int) current_x_2, line_y, ch);
         current_x_1 -= slope_1;
         current_x_2 -= slope_2;
     }
+    return;
 }
 
 void sort_vertices_by_y(Vec2 *a, Vec2 *b, Vec2 *c)
@@ -58,6 +79,7 @@ void sort_vertices_by_y(Vec2 *a, Vec2 *b, Vec2 *c)
         *b = *c;
         *c = tmp;
     }
+    return;
 }
 
 /**
@@ -81,6 +103,7 @@ void draw_triangle(Vec2 a, Vec2 b, Vec2 c, char ch)
         draw_flat_triangle_bottom(a, b, d, ch);
         draw_flat_triangle_top(b, d, c, ch);
     }
+    return;
 }
 
 /**
@@ -123,9 +146,13 @@ void draw_line(int x1, int y1, int x2, int y2, char c)
 */
 void draw_horizontal_line(int x1, int x2, int y, char c)
 {
-    for (int x = x1; x <= x2; ++x)
+    int start = x1 < x2 ? x1 : x2;
+    int end = x1 > x2 ? x1 : x2;
+
+    for (int x = start; x <= end; ++x)
     {
         move(y, x);
         addch(c);
     }
+    return;
 }

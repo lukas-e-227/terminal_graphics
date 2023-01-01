@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "./draw.h"
 #include "./geometry.h"
@@ -127,26 +128,30 @@ void free_mesh(Mesh *m)
     return;
 }
 
-void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int height, Vec3 *cam_pos)
+void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int height, Vec3 *light_dir_n, FILE *fp_test)
 {
-    Matrix4 m_z = z_rotate(delta_time * 32);
-    Matrix4 m_x = x_rotate(delta_time * 16);
-    Matrix4 m_z_x = multiply_matrix_matrix(&m_z, &m_x);
+    Matrix4 m_x = x_rotate(M_PI);
+    Matrix4 m_y = y_rotate(delta_time * 8);
+    //Matrix4 m_z = z_rotate(90.f);
+    
+    Matrix4 m_x_y = multiply_matrix_matrix(&m_x, &m_y);
     // translate and project maybe dont need to be instantiated every frame?
+    
     Matrix4 translate = translation_matrix(0.f, 0.f, 4.f);
     
-    //Matrix4 m_t_s = multiply_matrix_matrix(&translate, &scale);
-    Matrix4 w_m = multiply_matrix_matrix(&translate,  &m_z_x);
+    Matrix4 w_m = multiply_matrix_matrix(&translate,  &m_x_y);
 
-    multiply_triangle_matrix(&w_m, t);
+    multiply_triangle_matrix(&w_m, t); 
     
     Vec3 normal = get_normal(t);
-    Vec3 t_point = to_vec3(t->points[0]);
-    Vec3 cam_to_triangle = sub(&t_point, cam_pos);
-//dot_product(&normal, &cam_to_triangle)
-    if ( normal.z < 0.f)
+
+    if(normal.z < 0.f)
     {
 
+        float light_value = dot_product(&normal, light_dir_n);
+        char color = map_float_char(light_value);
+        //char color = map_float_char_2(light_value);
+        //fprintf(fp_test, "%f \n", light_value);
         Matrix4 project = projection_matrix(90.f, 4.f / 3.f, 0.1f, 1000.f);
         multiply_triangle_matrix(&project, t);
 
@@ -159,13 +164,20 @@ void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int heigh
         t->points[2].x += (float) width / 2.f; t->points[2].y += (float) height / 2.f;
         
 
-        //Vec2 a = {t.points[0].x, t.points[0].y};
-        //Vec2 b = {t.points[1].x, t.points[1].y};
-        //Vec2 c = {t.points[2].x, t.points[2].y};
-        
+        Vec2 _a = {round(t->points[0].x), round(t->points[0].y)};
+        Vec2 _b = {round(t->points[1].x), round(t->points[1].y)};
+        Vec2 _c = {round(t->points[2].x), round(t->points[2].y)};
+
+        draw_triangle(_a, _b, _c, color);
+
+        /*
         draw_line(t->points[0].x, t->points[0].y, t->points[1].x, t->points[1].y, '*');
         draw_line(t->points[1].x, t->points[1].y, t->points[2].x, t->points[2].y, '*');
         draw_line(t->points[2].x, t->points[2].y, t->points[0].x, t->points[0].y, '*');
+        */
+        //draw_line(_a.x, _a.y, _b.x, _b.y, '*');
+        //draw_line(_b.x, _b.y, _c.x, _c.y, '*');
+        //draw_line(_c.x, _c.y, _a.x, _a.y, '*');   
     }
     return;
 }
@@ -185,7 +197,7 @@ int main(int argc, char *argv[])
     }
     else if (argc < 2)
     {
-        m = load_mesh("./assets/cube.obj");
+        m = load_mesh("./assets/snowman_2.obj");
         if (m == NULL)
         {
             fprintf(stderr, "failure while loading file");
@@ -205,11 +217,17 @@ int main(int argc, char *argv[])
     initscr();
     cbreak();
     timeout(1);
-    Vec3 cam_pos = {0.f, 0.f, 0.f};
+    Vec3 light_dir = {0.f, 0.f, -1.f};
+    Vec3 light_dir_n = normalize(&light_dir);
     int width = 0, height = 0;
     int c = 0;
     // make pointer to start of mesh to reset after iterating over it
     Mesh *mesh_first_element = m;
+
+    FILE *fp_test;
+    
+    fp_test = fopen("lighting_values", "w");
+
     while (c != ' ')
     {
         clear();
@@ -220,7 +238,7 @@ int main(int argc, char *argv[])
             end = clock();
             delta_time = ((double) (end - start)) /CLOCKS_PER_SEC;
             Triangle t = m->t;
-            draw_triangle_from_mesh(&t, delta_time, width, height, &cam_pos);
+            draw_triangle_from_mesh(&t, delta_time, width, height, &light_dir_n, fp_test);
             m = m->next;
         }
         refresh();
