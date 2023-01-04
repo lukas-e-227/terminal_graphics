@@ -8,4 +8,4 @@ test: ascii_graphics
 	
 
 ascii_graphics: 
-	gcc $(CFLAGS) -g -o ascii_graphics src/mesh.c src/draw.c src/matrix.c -lm -lncurses
+	gcc $(CFLAGS) -g -o ascii_graphics src/mesh.c src/draw.c src/matrix.c -lm 

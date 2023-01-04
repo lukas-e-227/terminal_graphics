@@ -1,4 +1,5 @@
-#include <ncurses.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -9,6 +10,8 @@
 #include "./geometry.h"
 
 #define LINE_LENGTH 50
+#define WIDTH 916
+#define HEIGHT 148
 
 /**
  * parses an obj file to return a mesh of triangles
@@ -199,38 +202,31 @@ int main(int argc, char *argv[])
         }
     }
 
-    initscr();
-    cbreak();
-    timeout(1);
     Vec3 light_dir = {0.f, 0.f, -1.f};
     Vec3 light_dir_n = normalize(&light_dir);
-    int width = 0, height = 0;
-    int c = 0;
+
     // make pointer to start of mesh to reset after iterating over it
     Mesh *mesh_first_element = m;
 
-    while (c != ' ')
+    clear_screen();
+    while (1)
     {
-        clear();
-        getmaxyx(stdscr, height, width);
-        
+        clear_screen();
         while (m->next != NULL)
         {
             end = clock();
             delta_time = ((double) (end - start)) /CLOCKS_PER_SEC;
             Triangle t = m->t;
-            draw(&t, delta_time, width, height, &light_dir_n);
+            draw(&t, delta_time, WIDTH, HEIGHT, &light_dir_n);
             m = m->next;
         }
-        
+        print_screen();
         m = mesh_first_element;
-        refresh();
-        c = getch();
+
         usleep(50000);
     }
 
     free_mesh(m);
-    endwin();
     exit(0);
     return 0;
 }
