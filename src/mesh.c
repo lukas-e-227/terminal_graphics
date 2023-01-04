@@ -13,7 +13,7 @@
 /**
  * parses an obj file to return a mesh of triangles
 */
-Mesh * load_mesh(char * file_name)
+Mesh * load_mesh(char *file_name)
 {
     FILE *fp;
     fp = fopen(file_name, "r");
@@ -34,13 +34,7 @@ Mesh * load_mesh(char * file_name)
     }
 
     rewind(fp);
-    Mesh *m = (Mesh *) malloc(sizeof(Mesh));
-    size_t length = 0;
-    if (m == NULL)
-    {
-        fprintf(stderr, "Memory allocation for head failed");
-        exit(1);
-    }
+    Mesh *m_head = NULL;
     char *token;
     int i = 0;
     Vec4 vertices[vertices_count];
@@ -82,36 +76,36 @@ Mesh * load_mesh(char * file_name)
                 }
                 token = strtok(NULL, " ");
             }
-            // add triangle to mesh
-            add_to_mesh(m, t, length);
-            ++length;
+            add_to_mesh(&m_head, t);
         }
     }
-    return m;
+    fclose(fp); 
+    return m_head;
 }
 
-void add_to_mesh(Mesh *m, Triangle triangle, size_t length)
+void add_to_mesh(Mesh **m, Triangle triangle)
 {
-    Mesh *current = m;
-    
-    if (length == 0)
+    Mesh *new_mesh = (Mesh *) malloc(sizeof(Mesh));
+    if (new_mesh == NULL)
     {
-        m->t = triangle;
+        fprintf(stderr, "Memory allocation for new mesh failed\n");
+        exit(1);
     }
-    else
+    new_mesh->t = triangle;
+    new_mesh->next = NULL;
+
+    if (*m == NULL)
     {
+        *m = new_mesh;
+    }
+    else 
+    {
+        Mesh *current = *m;
         while (current->next != NULL)
         {
             current = current->next;
         }
-        Mesh *new_triangle = (Mesh *) malloc(sizeof(Mesh));
-        if (new_triangle == NULL)
-        {
-            fprintf(stderr, "Memory allocation for new triangle failed");
-            exit(1);
-        }
-        new_triangle->t = triangle;
-        current->next = new_triangle;
+        current->next = new_mesh;
     }
     return;
 }
@@ -128,7 +122,7 @@ void free_mesh(Mesh *m)
     return;
 }
 
-void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int height, Vec3 *light_dir_n, FILE *fp_test)
+void draw(Triangle *t, float delta_time, int width, int height, Vec3 *light_dir_n)
 {
     Matrix4 m_x = x_rotate(M_PI);
     Matrix4 m_y = y_rotate(delta_time * 8);
@@ -151,7 +145,8 @@ void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int heigh
         float light_value = dot_product(&normal, light_dir_n);
         char color = map_float_char(light_value);
         //char color = map_float_char_2(light_value);
-        //fprintf(fp_test, "%f \n", light_value);
+        t->color = color;
+
         Matrix4 project = projection_matrix(90.f, 4.f / 3.f, 0.1f, 1000.f);
         multiply_triangle_matrix(&project, t);
 
@@ -163,21 +158,11 @@ void draw_triangle_from_mesh(Triangle *t, float delta_time, int width, int heigh
         t->points[1].x += (float) width / 2.f; t->points[1].y += (float) height / 2.f;
         t->points[2].x += (float) width / 2.f; t->points[2].y += (float) height / 2.f;
         
-
         Vec2 _a = {round(t->points[0].x), round(t->points[0].y)};
         Vec2 _b = {round(t->points[1].x), round(t->points[1].y)};
         Vec2 _c = {round(t->points[2].x), round(t->points[2].y)};
 
         draw_triangle(_a, _b, _c, color);
-
-        /*
-        draw_line(t->points[0].x, t->points[0].y, t->points[1].x, t->points[1].y, '*');
-        draw_line(t->points[1].x, t->points[1].y, t->points[2].x, t->points[2].y, '*');
-        draw_line(t->points[2].x, t->points[2].y, t->points[0].x, t->points[0].y, '*');
-        */
-        //draw_line(_a.x, _a.y, _b.x, _b.y, '*');
-        //draw_line(_b.x, _b.y, _c.x, _c.y, '*');
-        //draw_line(_c.x, _c.y, _a.x, _a.y, '*');   
     }
     return;
 }
@@ -200,7 +185,7 @@ int main(int argc, char *argv[])
         m = load_mesh("./assets/snowman_2.obj");
         if (m == NULL)
         {
-            fprintf(stderr, "failure while loading file");
+            fprintf(stderr, "failure while loading file\n");
             exit(1);
         }
     }
@@ -209,7 +194,7 @@ int main(int argc, char *argv[])
         m = load_mesh(argv[1]);
         if (m == NULL)
         {
-            fprintf(stderr, "failure while loading file");
+            fprintf(stderr, "failure while loading file\n");
             exit(1);
         }
     }
@@ -224,10 +209,6 @@ int main(int argc, char *argv[])
     // make pointer to start of mesh to reset after iterating over it
     Mesh *mesh_first_element = m;
 
-    FILE *fp_test;
-    
-    fp_test = fopen("lighting_values", "w");
-
     while (c != ' ')
     {
         clear();
@@ -238,11 +219,12 @@ int main(int argc, char *argv[])
             end = clock();
             delta_time = ((double) (end - start)) /CLOCKS_PER_SEC;
             Triangle t = m->t;
-            draw_triangle_from_mesh(&t, delta_time, width, height, &light_dir_n, fp_test);
+            draw(&t, delta_time, width, height, &light_dir_n);
             m = m->next;
         }
-        refresh();
+        
         m = mesh_first_element;
+        refresh();
         c = getch();
         usleep(50000);
     }

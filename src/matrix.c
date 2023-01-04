@@ -3,8 +3,6 @@
 
 #include "./geometry.h"
 
-
-
 Matrix4 default_zero()
 {
     Matrix4 m = {.m = {{0}}};

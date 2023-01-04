@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/terminal_graphics",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",

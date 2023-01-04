@@ -19,6 +19,7 @@ typedef struct vec4 {
 
 typedef struct triangle {
     Vec4 points[3];
+    char color;
 } Triangle;
 
 typedef struct mesh {
@@ -55,6 +56,6 @@ Vec3 normalize(Vec3 *v);
 
 Vec3 get_normal(Triangle *t);
 
-void add_to_mesh(Mesh *m, Triangle t, size_t length);
-
+void add_to_mesh(Mesh **m, Triangle t);
+//test
 Mesh * load_mesh(char * file_name);
