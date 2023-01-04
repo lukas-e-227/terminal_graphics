@@ -1,13 +1,11 @@
+#include <ncurses.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include "./draw.h"
-#define WIDTH 916
-#define HEIGHT 148
-               
+                               
 static const char CHARS[] = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
 static const char CHARS_2[] = {' ','.',':','-','=','+','*','#','%','@'};
-char CANVAS[WIDTH * HEIGHT];
 
 char map_float_char(float light_value)
 {
@@ -34,7 +32,8 @@ void draw_flat_triangle_bottom(Vec2 a, Vec2 b, Vec2 c, char ch)
     float current_x_2 = a.x;
 
     for (int line_y = a.y; line_y <= b.y; ++line_y)
-    { 
+    {
+        //draw_line((int) current_x_1, line_y, (int) current_x_2, line_y, ch);
         draw_horizontal_line((int) current_x_1, (int) current_x_2, line_y, ch);
         current_x_1 += slope_1;
         current_x_2 += slope_2;
@@ -52,6 +51,7 @@ void draw_flat_triangle_top(Vec2 a, Vec2 b, Vec2 c, char ch)
 
     for (int line_y = c.y; line_y > a.y; --line_y)
     {
+        //draw_line((int) current_x_1, line_y, (int) current_x_2, line_y, ch);
         draw_horizontal_line((int) current_x_1, (int) current_x_2, line_y, ch);
         current_x_1 -= slope_1;
         current_x_2 -= slope_2;
@@ -83,7 +83,6 @@ void sort_vertices_by_y(Vec2 *a, Vec2 *b, Vec2 *c)
 }
 
 /**
- * source for the rasterization algorithm: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
  * Vec2 a, b, c are the vertices of the triangle, which is filled with character ch
 */
 void draw_triangle(Vec2 a, Vec2 b, Vec2 c, char ch)
@@ -108,6 +107,41 @@ void draw_triangle(Vec2 a, Vec2 b, Vec2 c, char ch)
 }
 
 /**
+ * draw a line between two points (x1, y1) and (x2, y2) using bresenhams algorithm
+ */
+void draw_line(int x1, int y1, int x2, int y2, char c)
+{
+    int dx = abs(x2 - x1);
+    int dy = -abs(y2 - y1);
+
+    int error = dx + dy;
+    int e2;
+
+    // Determine the direction of the line based on the starting and ending points
+    int xinc = x1 < x2 ? 1 : -1;
+    int yinc = y1 < y2 ? 1 : -1;
+
+    while (1)
+    {
+        move(y1, x1);
+        addch(c);
+        if (x1 == x2 && y1 == y2) break;
+        e2 = 2 * error;
+        if (e2 > dy)
+        {
+            error += dy; 
+            x1 += xinc;
+        }
+        if (e2 < dx) 
+        {
+            error += dx;
+            y1 += yinc;
+        }
+    }
+    return;
+}
+
+/**
  * simple horizontal line is enough to fill the triangles
 */
 void draw_horizontal_line(int x1, int x2, int y, char c)
@@ -117,28 +151,8 @@ void draw_horizontal_line(int x1, int x2, int y, char c)
 
     for (int x = start; x <= end; ++x)
     {
-        //move(y, x);
-        //addch(c);
-        CANVAS[x + WIDTH * y] = c;
+        move(y, x);
+        addch(c);
     }
     return;
-}
-
-void clear_screen()
-{
-    memset(CANVAS, ' ', WIDTH * HEIGHT);
-    printf("\033[2J");
-}
-
-void print_screen()
-{
-    for (int y = 0; y < HEIGHT; ++y)
-    {
-        for (int x = 0; x < WIDTH; ++x)
-        {
-            char c = CANVAS[x + WIDTH * y];
-            printf("%c", c);
-        }
-        printf("\n");
-    }
 }
